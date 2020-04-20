@@ -1,6 +1,8 @@
 ﻿using EmailValidation;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Text;
 
 namespace Postman
@@ -10,13 +12,13 @@ namespace Postman
         private static SubscribeManager instance;
         private static readonly object instanceLock = new object();
 
-        private Dictionary<int, Subscriber> subscriberTable;
+        private readonly Dictionary<int, Subscriber> subscriberTable;
 
         private SubscribeManager()
         {
             subscriberTable = new Dictionary<int, Subscriber>();
 
-            LoadSubscribers();
+            UpdateSubscriberTable();
         }
 
         public static SubscribeManager Instance
@@ -82,7 +84,14 @@ namespace Postman
             return true;
         }
 
-        private void LoadSubscribers()
+        public IEnumerable<Subscriber> GetSubscribers()
+        {
+            UpdateSubscriberTable();
+
+            return subscriberTable.Values.AsEnumerable();
+        }
+
+        private void UpdateSubscriberTable()
         {
             List<Subscriber> subscribers = DatabaseManager.Instance.SelectAllSubscribers();
 

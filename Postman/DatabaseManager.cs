@@ -1,6 +1,7 @@
 ﻿using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text;
 
 namespace Postman
@@ -10,21 +11,11 @@ namespace Postman
         private static DatabaseManager instance;
         private static readonly object instanceLock = new object();
 
-        private static readonly string dataSource = "PostmanDB.db";
-
         private SqliteConnection connection;
 
         private DatabaseManager()
         {
-            SqliteConnectionStringBuilder builder = new SqliteConnectionStringBuilder()
-            {
-                DataSource = dataSource
-            };
-
-            connection = new SqliteConnection(builder.ConnectionString);
-            connection.Open();
-
-            CreateTables();
+            
         }
 
         public static DatabaseManager Instance
@@ -42,8 +33,39 @@ namespace Postman
             }
         }
 
+        public void Connect(string dataSource)
+        {
+            dataSource = dataSource.Trim();
+            if (string.IsNullOrWhiteSpace(dataSource))
+            {
+                throw new ArgumentNullException(nameof(dataSource));
+            }
+
+            if (connection != null && connection.State == ConnectionState.Open)
+            {
+                Console.WriteLine("Reopen connection");
+                connection.Close();
+            }
+
+            SqliteConnectionStringBuilder builder = new SqliteConnectionStringBuilder()
+            {
+                DataSource = dataSource
+            };
+
+            connection = new SqliteConnection(builder.ConnectionString);
+            connection.Open();
+
+            CreateDefaultTables();
+        }
+
         public void Close()
         {
+            if (connection == null || connection.State == ConnectionState.Closed)
+            {
+                Console.WriteLine("Connection is already closed");
+                return;
+            }
+
             connection.Close();
         }
 
@@ -114,7 +136,7 @@ namespace Postman
             }
         }
 
-        private void CreateTables()
+        private void CreateDefaultTables()
         {
             string query = "CREATE TABLE IF NOT EXISTS `subscriber` " +
                 "(`id` INTEGER NOT NULL UNIQUE, `email` TEXT NOT NULL UNIQUE, `subscribed_date` TEXT NOT NULL, PRIMARY KEY(`id`));";
