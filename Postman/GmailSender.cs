@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Net;
 using System.Net.Mail;
@@ -34,7 +35,7 @@ namespace Postman
             sender = new MailAddress(gmailAccount, displayName);
         }
 
-        public async Task SendMailAsync(IEnumerable<string> receivers, string subject, string body, bool isBodyHtml = false)
+        public async Task SendMailAsync(IEnumerable<string> receivers, string subject, string body, SendCompletedEventHandler callback, bool isBodyHtml = false)
         {
             if (receivers == null)
             {
@@ -57,16 +58,6 @@ namespace Postman
                 throw new ArgumentException("수신자 주소가 비어있음", nameof(receivers));
             }
 
-            using var smtpClient = new SmtpClient()
-            {
-                Host = "smtp.gmail.com",
-                Port = 587,
-                EnableSsl = true,
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                UseDefaultCredentials = false,
-                Credentials = credential
-            };
-
             using MailMessage message = new MailMessage()
             {
                 From = sender,
@@ -79,6 +70,17 @@ namespace Postman
             {
                 message.Bcc.Add(receiver);
             }
+
+            using var smtpClient = new SmtpClient()
+            {
+                Host = "smtp.gmail.com",
+                Port = 587,
+                EnableSsl = true,
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                UseDefaultCredentials = false,
+                Credentials = credential
+            };
+            smtpClient.SendCompleted += callback;
 
             await smtpClient.SendMailAsync(message);
         }
