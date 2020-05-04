@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.Text;
 
 namespace Postman
@@ -10,6 +11,7 @@ namespace Postman
     {
         private static DatabaseManager instance;
         private static readonly object instanceLock = new object();
+        private static readonly CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
 
         private SqliteConnection connection;
 
@@ -86,7 +88,7 @@ namespace Postman
                     string email = dataReader.GetString(1);
                     string subscribedDate = dataReader.GetString(2);
 
-                    subscribers.Add(new Subscriber(id, email, DateTime.Parse(subscribedDate)));
+                    subscribers.Add(new Subscriber(id, email, DateTime.Parse(subscribedDate, culture)));
                 }
             }
             catch (SqliteException e)
@@ -105,7 +107,7 @@ namespace Postman
             using var command = new SqliteCommand(query, connection);
             command.Parameters.AddWithValue("@id", subscriber.Id);
             command.Parameters.AddWithValue("@email", subscriber.Email);
-            command.Parameters.AddWithValue("@subscribed_date", subscriber.SubscribedDate.ToString());
+            command.Parameters.AddWithValue("@subscribed_date", subscriber.SubscribedDate.ToString(culture));
 
             try
             {
