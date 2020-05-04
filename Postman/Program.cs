@@ -61,7 +61,7 @@ namespace Postman
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            //mailSender.SendMail(subscriberEmails, subject, body);
+            mailSender.SendMail(subscriberEmails, subject, body);
 
             stopwatch.Stop();
             Logger.Instance.Log(Logger.Level.Info, $"메일 전송 완료, {TimeSpan.FromMilliseconds(stopwatch.ElapsedMilliseconds).TotalSeconds}secs");
