@@ -27,8 +27,8 @@ namespace Postman
             Logger.Instance.Log(Logger.Level.Info, "프로그램 시작");
 
             // 구독자 데이터베이스 연결
-            Logger.Instance.Log(Logger.Level.Info, $"구독자 데이터베이스 연결, '{databaseName}'");
-            DatabaseManager.Instance.Connect(databaseName);
+            Logger.Instance.Log(Logger.Level.Info, $"구독자 데이터베이스 연결, '{DatabasePath}'");
+            DatabaseManager.Instance.Connect(DatabasePath);
 
             // 구독자 정보 불러오기
             IEnumerable<Subscriber> subscribers = SubscribeManager.Instance.GetSubscribers();
