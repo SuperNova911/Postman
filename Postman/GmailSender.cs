@@ -35,7 +35,7 @@ namespace Postman
             sender = new MailAddress(gmailAccount, displayName);
         }
 
-        public async Task<bool> SendMailAsync(IEnumerable<string> receivers, string subject, string body, bool isBodyHtml = false)
+        public bool SendMail(IEnumerable<string> receivers, string subject, string body, bool isBodyHtml = false)
         {
             if (receivers == null)
             {
@@ -80,28 +80,39 @@ namespace Postman
                 UseDefaultCredentials = false,
                 Credentials = credential
             };
-            smtpClient.SendCompleted += SmtpClient_SendCompleted;
+            //smtpClient.SendCompleted += SmtpClient_SendCompleted;
 
-            await smtpClient.SendMailAsync(message);
+            try
+            {
+                smtpClient.Send(message);
+                return true;
+            }
+            catch (SmtpException e)
+            {
+                Logger.Instance.Log(Logger.Level.Error, "메일 전송중 문제 발생", e);
+            }
+            catch (Exception e)
+            {
+                Logger.Instance.Log(Logger.Level.Fatal, "메일 전송중 심각한 문제 발생", e);
+            }
 
-            // Temp
-            return true;
+            return false;
         }
 
         private void SmtpClient_SendCompleted(object sender, AsyncCompletedEventArgs e)
         {
             if (e.Cancelled)
             {
-                Console.WriteLine($"메일 전송이 취소됨");
+                Logger.Instance.Log(Logger.Level.Error, "메일 전송이 취소됨");
             }
 
             if (e.Error != null)
             {
-                Console.WriteLine($"메일 전송 에러, {e.Error}");
+                Logger.Instance.Log(Logger.Level.Error, $"메일 전송 에러, {e.Error}");
             }
             else
             {
-                Console.WriteLine($"메일이 전송됨");
+                Logger.Instance.Log(Logger.Level.Info, "메일이 전송됨");
             }
         }
     }

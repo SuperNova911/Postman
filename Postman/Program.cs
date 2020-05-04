@@ -55,7 +55,7 @@ namespace Postman
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            mailSender.SendMailAsync(subscriberEmails, subject, body).Wait();
+            mailSender.SendMail(subscriberEmails, subject, body);
 
             stopwatch.Stop();
             Logger.Instance.Log(Logger.Level.Info, $"메일 전송 완료, {TimeSpan.FromMilliseconds(stopwatch.ElapsedMilliseconds).TotalSeconds}secs");
@@ -79,7 +79,7 @@ namespace Postman
                     string[] credential = accountString.Split('/');
                     if (credential.Length != 2)
                     {
-                        Console.WriteLine($"잘못된 형식의 Credential, '{credential}'");
+                        Logger.Instance.Log(Logger.Level.Warn, $"잘못된 형식의 Credential, '{credential}'");
                         continue;
                     }
 
@@ -87,7 +87,7 @@ namespace Postman
                     string password = credential[1];
                     if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(password))
                     {
-                        Console.WriteLine("아이디 또는 비밀번호가 빈 문자열");
+                        Logger.Instance.Log(Logger.Level.Warn, "아이디 또는 비밀번호가 빈 문자열");
                         continue;
                     }
 
@@ -96,13 +96,12 @@ namespace Postman
             }
             catch (FileNotFoundException)
             {
-                Console.WriteLine($"Gmail credential 파일이 '{path}' 경로에 생성됨");
+                Logger.Instance.Log(Logger.Level.Info, $"Gmail credential 파일이 '{path}' 경로에 생성됨");
                 File.WriteAllText(path, "id/password");
             }
             catch (IOException e)
             {
-                Console.WriteLine($"Gmail credential을 불러오는 중 문제 발생, '{path}'");
-                Console.WriteLine(e);
+                Logger.Instance.Log(Logger.Level.Error, $"Gmail credential을 불러오는 중 문제 발생, '{path}'", e);
             }
 
             return null;

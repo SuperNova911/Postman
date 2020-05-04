@@ -6,6 +6,6 @@ namespace Postman
 {
     interface IMailSender
     {
-        Task<bool> SendMailAsync(IEnumerable<string> receivers, string subject, string body, bool isBodyHtml = false);
+        bool SendMail(IEnumerable<string> receivers, string subject, string body, bool isBodyHtml = false);
     }
 }

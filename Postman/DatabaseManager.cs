@@ -45,7 +45,7 @@ namespace Postman
 
             if (connection != null && connection.State == ConnectionState.Open)
             {
-                Console.WriteLine("Reopen connection");
+                Logger.Instance.Log(Logger.Level.Warn, "이미 연결된 데이터베이스 연결 종료");
                 connection.Close();
             }
 
@@ -64,7 +64,7 @@ namespace Postman
         {
             if (connection == null || connection.State == ConnectionState.Closed)
             {
-                Console.WriteLine("Connection is already closed");
+                Logger.Instance.Log(Logger.Level.Warn, "데이터베이스와 연결 중이 아닙니다");
                 return;
             }
 
@@ -93,7 +93,7 @@ namespace Postman
             }
             catch (SqliteException e)
             {
-                Console.WriteLine(e);
+                Logger.Instance.Log(Logger.Level.Error, "데이터베이스 오류", e);
             }
 
             return subscribers;
@@ -116,7 +116,7 @@ namespace Postman
             }
             catch (SqliteException e)
             {
-                Console.WriteLine(e);
+                Logger.Instance.Log(Logger.Level.Error, "데이터베이스 오류", e);
                 return false;
             }
         }
@@ -134,7 +134,7 @@ namespace Postman
             }
             catch (SqliteException e)
             {
-                Console.WriteLine(e);
+                Logger.Instance.Log(Logger.Level.Error, "데이터베이스 오류", e);
             }
         }
 
