@@ -83,6 +83,9 @@ namespace Postman
             smtpClient.SendCompleted += SmtpClient_SendCompleted;
 
             await smtpClient.SendMailAsync(message);
+
+            // Temp
+            return true;
         }
 
         private void SmtpClient_SendCompleted(object sender, AsyncCompletedEventArgs e)
