@@ -35,7 +35,7 @@ namespace Postman
             sender = new MailAddress(gmailAccount, displayName);
         }
 
-        public async Task SendMailAsync(IEnumerable<string> receivers, string subject, string body, SendCompletedEventHandler callback, bool isBodyHtml = false)
+        public async Task<bool> SendMailAsync(IEnumerable<string> receivers, string subject, string body, bool isBodyHtml = false)
         {
             if (receivers == null)
             {
@@ -80,9 +80,26 @@ namespace Postman
                 UseDefaultCredentials = false,
                 Credentials = credential
             };
-            smtpClient.SendCompleted += callback;
+            smtpClient.SendCompleted += SmtpClient_SendCompleted;
 
             await smtpClient.SendMailAsync(message);
+        }
+
+        private void SmtpClient_SendCompleted(object sender, AsyncCompletedEventArgs e)
+        {
+            if (e.Cancelled)
+            {
+                Console.WriteLine($"메일 전송이 취소됨");
+            }
+
+            if (e.Error != null)
+            {
+                Console.WriteLine($"메일 전송 에러, {e.Error}");
+            }
+            else
+            {
+                Console.WriteLine($"메일이 전송됨");
+            }
         }
     }
 }
