@@ -6,23 +6,28 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Postman
 {
     class Program
     {
-        private static readonly string subscriberDBPath = "PostmanDB.db";
-        private static readonly string gmailCredentialPath = "GmailCredential.txt";
+        private static readonly string databaseName = "PostmanDB.db";
+        private static readonly string gmailCredentialFileName = "GmailCredential.txt";
         private static readonly string projectNickname = "주가예측 알리미";
+
+        public static string DatabasePath => $"{Directory.GetCurrentDirectory()}\\{databaseName}";
+        public static string GmailCredentialPath => $"{Directory.GetCurrentDirectory()}\\{gmailCredentialFileName}";
 
         static void Main(string[] args)
         {
+            Logger.Instance.Log(Logger.Level.Info, "--------------------------------------------------");
             Logger.Instance.Log(Logger.Level.Info, "프로그램 시작");
 
             // 구독자 데이터베이스 연결
-            Logger.Instance.Log(Logger.Level.Info, $"구독자 데이터베이스 연결, '{subscriberDBPath}'");
-            DatabaseManager.Instance.Connect(subscriberDBPath);
+            Logger.Instance.Log(Logger.Level.Info, $"구독자 데이터베이스 연결, '{databaseName}'");
+            DatabaseManager.Instance.Connect(databaseName);
 
             // 구독자 정보 불러오기
             IEnumerable<Subscriber> subscribers = SubscribeManager.Instance.GetSubscribers();
@@ -37,7 +42,7 @@ namespace Postman
             Logger.Instance.Log(Logger.Level.Info, $"'{subscriberEmails.Count()}'명의 구독자 이메일 주소를 불러옴");
 
             // MailSender 초기화
-            NetworkCredential gmailCredential = LoadGmailCredential(gmailCredentialPath);
+            NetworkCredential gmailCredential = LoadGmailCredential(GmailCredentialPath);
             if (gmailCredential == null)
             {
                 Logger.Instance.Log(Logger.Level.Warn, "Gmail credential이 없음");
@@ -55,7 +60,7 @@ namespace Postman
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            mailSender.SendMail(subscriberEmails, subject, body);
+            //mailSender.SendMail(subscriberEmails, subject, body);
 
             stopwatch.Stop();
             Logger.Instance.Log(Logger.Level.Info, $"메일 전송 완료, {TimeSpan.FromMilliseconds(stopwatch.ElapsedMilliseconds).TotalSeconds}secs");
@@ -63,6 +68,8 @@ namespace Postman
             // 구독자 데이터베이스 연결 종료
             Logger.Instance.Log(Logger.Level.Info, "구독자 데이터베이스 연결 종료");
             DatabaseManager.Instance.Close();
+
+            Logger.Instance.Log(Logger.Level.Info, "프로그램 종료");
         }
 
         private static NetworkCredential LoadGmailCredential(string path)
