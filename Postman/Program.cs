@@ -18,8 +18,8 @@ namespace Postman
         private static readonly string gmailCredentialFileName = "GmailCredential.txt";
         private static readonly string projectNickname = "주가예측 알리미";
 
-        public static string DatabasePath => $"{Directory.GetCurrentDirectory()}\\{databaseName}";
-        public static string GmailCredentialPath => $"{Directory.GetCurrentDirectory()}\\{gmailCredentialFileName}";
+        public static string DatabasePath => $"{Directory.GetCurrentDirectory()}/{databaseName}";
+        public static string GmailCredentialPath => $"{Directory.GetCurrentDirectory()}/{gmailCredentialFileName}";
 
         static void Main(string[] args)
         {
