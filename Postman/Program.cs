@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EmailValidation;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -95,6 +96,12 @@ namespace Postman
                     if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(password))
                     {
                         Logger.Instance.Log(Logger.Level.Warn, "아이디 또는 비밀번호가 빈 문자열");
+                        continue;
+                    }
+
+                    if (EmailValidator.Validate(id) == false)
+                    {
+                        Logger.Instance.Log(Logger.Level.Warn, $"올바른 이메일의 형식이 아님, '{id}'");
                         continue;
                     }
 
