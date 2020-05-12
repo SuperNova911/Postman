@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -66,7 +67,11 @@ namespace Postman
                 else
                 {
                     Logger.Instance.Log(Logger.Level.Info, $"새로운 설정 파일 생성, '{path}'");
-                    string json = JsonSerializer.Serialize(Settings.DefaultSettings);
+                    string json = JsonSerializer.Serialize(Settings.DefaultSettings, new JsonSerializerOptions()
+                    {
+                        WriteIndented = true,
+                        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All)
+                    });
                     File.WriteAllText(settingFilePath, json);
                 }
             }
