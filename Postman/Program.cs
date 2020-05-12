@@ -233,10 +233,10 @@ namespace Postman
 
         private class Options
         {
-            [Option('s', HelpText = "구독 목록에 추가할 이메일 입력 ';'로 구분")]
+            [Option('s', HelpText = "구독 목록에 추가할 이메일 입력 ','로 구분")]
             public string SubscribeEmails { get; set; }
 
-            [Option('u', HelpText = "구독 목록에서 제거할 이메일 입력 ';'로 구분")]
+            [Option('u', HelpText = "구독 목록에서 제거할 이메일 입력 ','로 구분")]
             public string UnsubscribeEmails { get; set; }
 
             [Option("daily", HelpText = "데일리 메일을 구독자들에게 전송")]
