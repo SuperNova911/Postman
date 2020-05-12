@@ -121,12 +121,12 @@ namespace Postman
             }
         }
 
-        public void RemoveSubscriber(Subscriber subscriber)
+        public void RemoveSubscriberById(int id)
         {
             string query = "DELETE FROM `subscriber` WHERE `id` = @id;";
 
             using var command = new SqliteCommand(query, connection);
-            command.Parameters.AddWithValue("@id", subscriber.Id);
+            command.Parameters.AddWithValue("@id", id);
 
             try
             {

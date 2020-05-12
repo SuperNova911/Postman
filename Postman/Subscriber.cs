@@ -9,6 +9,7 @@ namespace Postman
         public int Id { get; }
         public string Email { get; }
         public DateTime SubscribedDate { get; }
+        public string Token => Id.ToString("X");
 
         public Subscriber(string email)
         {

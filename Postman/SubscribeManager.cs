@@ -1,7 +1,7 @@
 ﻿using EmailValidation;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 
@@ -67,7 +67,7 @@ namespace Postman
             return true;
         }
 
-        public bool Unsubscribe(string email)
+        public bool Unsubscribe(string email, string token)
         {
             if (string.IsNullOrWhiteSpace(email))
             {
@@ -81,15 +81,26 @@ namespace Postman
                 return false;
             }
 
-            Subscriber subscriber = new Subscriber(email);
-            if (subscriberTable.ContainsKey(subscriber.Id) == false)
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                throw new ArgumentNullException(nameof(token));
+            }
+
+            if (token.Length != 8)
+            {
+                Logger.Instance.Log(Logger.Level.Warn, $"유효하지 않은 토큰, '{token}'");
+                return false;
+            }
+
+            int id = int.Parse(token, NumberStyles.HexNumber);
+            if (subscriberTable.ContainsKey(id) == false)
             {
                 Logger.Instance.Log(Logger.Level.Warn, $"구독중이 아닌 이메일 주소, '{email}'");
                 return false;
             }
 
-            DatabaseManager.Instance.RemoveSubscriber(subscriber);
-            subscriberTable.Remove(subscriber.Id);
+            DatabaseManager.Instance.RemoveSubscriberById(id);
+            subscriberTable.Remove(id);
 
             return true;
         }
