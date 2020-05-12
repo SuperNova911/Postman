@@ -117,7 +117,7 @@ namespace Postman
             // 구독
             if (string.IsNullOrWhiteSpace(options.SubscribeEmails) == false)
             {
-                IEnumerable<string> emails = options.SubscribeEmails.Split(';').Where(x => x.Length > 0);
+                IEnumerable<string> emails = options.SubscribeEmails.Split(',').Where(x => x.Length > 0);
                 Logger.Instance.Log(Logger.Level.Info, $"구독자 '{emails.Count()}'명 추가");
                 foreach (string email in emails)
                 {
@@ -128,7 +128,7 @@ namespace Postman
             // 구독 해지
             if (string.IsNullOrWhiteSpace(options.UnsubscribeEmails) == false)
             {
-                IEnumerable<string> emails = options.UnsubscribeEmails.Split(';').Where(x => x.Length > 0);
+                IEnumerable<string> emails = options.UnsubscribeEmails.Split(',').Where(x => x.Length > 0);
                 Logger.Instance.Log(Logger.Level.Info, $"구독자 '{emails.Count()}'명 제거");
                 foreach (string email in emails)
                 {
