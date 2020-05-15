@@ -44,7 +44,3 @@ class GmailSender(MailSender):
         smtp.login(self.__account, self.__password)
         smtp.send_message(message)
         smtp.quit()
-
-
-gmail = GmailSender('bucephalussw@gmail.com', 'qifbhowhamhdohfn', 'Python Postman')
-gmail.send_mail(['suwhan77@naver.com', 'joduska001@gmail.com', 'chbang22@gmail.com'], 'Subject', 'Plain text<h1>html text</h1>', True)
