@@ -84,6 +84,11 @@ class SubscribeManager:
         return self.__subscriber_table.values()
 
 
+    def check_subscribe(self, email):
+        subscriber = Subscriber(email)
+        return subscriber.id in self.__subscriber_table
+
+
     def __update_subscriber_table(self):
         subscribers = DatabaseManager().select_all_subscribers()
         if len(subscribers) > 0:

@@ -112,6 +112,12 @@ namespace Postman
             return subscriberTable.Values.AsEnumerable();
         }
 
+        public bool CheckSubscribe(string email)
+        {
+            var subscriber = new Subscriber(email);
+            return subscriberTable.ContainsKey(subscriber.Id);
+        }
+
         private void UpdateSubscriberTable()
         {
             List<Subscriber> subscribers = DatabaseManager.Instance.SelectAllSubscribers();
