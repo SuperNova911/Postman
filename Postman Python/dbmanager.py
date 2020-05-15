@@ -14,7 +14,7 @@ class DatabaseManager:
     
 
     def connect(self, db_path):
-        self.__connection = sqlite3.connect(db_path)
+        self.__connection = sqlite3.connect(db_path, check_same_thread = False)
         self.__create_default_tables()
 
 
