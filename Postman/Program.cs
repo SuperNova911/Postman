@@ -169,7 +169,7 @@ namespace Postman
             IMailSender mailSender = new GmailSender(gmailCredential.UserName, gmailCredential.Password, settings.ProjectNickname);
 
             // 메일 내용 빌드
-            string subject = $"[{settings.ProjectNickname}] {DateTime.Today.ToShortDateString()}";
+            string subject = $"[{settings.ProjectNickname}] {DateTime.Today:yyyy-MM-dd}";
             string body = DateTime.Now.Second % 2 == 1 ? "📈 떡상 가즈아~~!" : "📉 내려간다 꽉잡아!!!";
 
             // 메일 전송
