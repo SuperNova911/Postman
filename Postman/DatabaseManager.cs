@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -13,7 +13,7 @@ namespace Postman
         private static readonly object instanceLock = new object();
         private static readonly CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
 
-        private SqliteConnection connection;
+        private MySqlConnection connection;
 
         private DatabaseManager()
         {
@@ -35,26 +35,23 @@ namespace Postman
             }
         }
 
-        public void Connect(string dataSource)
+        public void Connect(string server, string database, string userId, string password)
         {
-            dataSource = dataSource.Trim();
-            if (string.IsNullOrWhiteSpace(dataSource))
-            {
-                throw new ArgumentNullException(nameof(dataSource));
-            }
-
             if (connection != null && connection.State == ConnectionState.Open)
             {
                 Logger.Instance.Log(Logger.Level.Warn, "이미 연결된 데이터베이스 연결 종료");
                 connection.Close();
             }
 
-            SqliteConnectionStringBuilder builder = new SqliteConnectionStringBuilder()
+            MySqlConnectionStringBuilder builder = new MySqlConnectionStringBuilder
             {
-                DataSource = dataSource
+                Server = server,
+                Database = database,
+                UserID = userId,
+                Password = password,
             };
 
-            connection = new SqliteConnection(builder.ConnectionString);
+            connection = new MySqlConnection(builder.ConnectionString);
             connection.Open();
 
             CreateDefaultTables();
@@ -75,23 +72,23 @@ namespace Postman
         {
             string query = "SELECT * FROM `subscriber`";
 
-            using var command = new SqliteCommand(query, connection);
+            using var command = new MySqlCommand(query, connection);
 
             List<Subscriber> subscribers = new List<Subscriber>();
 
             try
             {
-                using SqliteDataReader dataReader = command.ExecuteReader();
+                using MySqlDataReader dataReader = command.ExecuteReader();
                 while (dataReader.Read())
                 {
-                    int id = dataReader.GetInt32(0);
-                    string email = dataReader.GetString(1);
-                    string subscribedDate = dataReader.GetString(2);
+                    int id = dataReader.GetInt32("id");
+                    string email = dataReader.GetString("email");
+                    string subscribedDate = dataReader.GetString("subscribed_date");
 
                     subscribers.Add(new Subscriber(id, email, DateTime.Parse(subscribedDate, culture)));
                 }
             }
-            catch (SqliteException e)
+            catch (MySqlException e)
             {
                 Logger.Instance.Log(Logger.Level.Error, "데이터베이스 오류", e);
             }
@@ -104,7 +101,7 @@ namespace Postman
             string query = "INSERT INTO `subscriber` (`id`, `email`, `subscribed_date`) " +
                 "VALUES (@id, @email, @subscribed_date);";
 
-            using var command = new SqliteCommand(query, connection);
+            using var command = new MySqlCommand(query, connection);
             command.Parameters.AddWithValue("@id", subscriber.Id);
             command.Parameters.AddWithValue("@email", subscriber.Email);
             command.Parameters.AddWithValue("@subscribed_date", subscriber.SubscribedDate.ToString(culture));
@@ -114,7 +111,7 @@ namespace Postman
                 command.ExecuteNonQuery();
                 return true;
             }
-            catch (SqliteException e)
+            catch (MySqlException e)
             {
                 Logger.Instance.Log(Logger.Level.Error, "데이터베이스 오류", e);
                 return false;
@@ -125,14 +122,14 @@ namespace Postman
         {
             string query = "DELETE FROM `subscriber` WHERE `id` = @id;";
 
-            using var command = new SqliteCommand(query, connection);
+            using var command = new MySqlCommand(query, connection);
             command.Parameters.AddWithValue("@id", id);
 
             try
             {
                 command.ExecuteNonQuery();
             }
-            catch (SqliteException e)
+            catch (MySqlException e)
             {
                 Logger.Instance.Log(Logger.Level.Error, "데이터베이스 오류", e);
             }
@@ -140,10 +137,11 @@ namespace Postman
 
         private void CreateDefaultTables()
         {
-            string query = "CREATE TABLE IF NOT EXISTS `subscriber` " +
-                "(`id` INTEGER NOT NULL UNIQUE, `email` TEXT NOT NULL UNIQUE, `subscribed_date` TEXT NOT NULL, PRIMARY KEY(`id`));";
+            string query = "CREATE TABLE IF NOT EXISTS `alphastock`.`subscriber` " +
+                "(`id` INT NOT NULL, `email` VARCHAR(128) NOT NULL, `subscribed_date` VARCHAR(45) NOT NULL, PRIMARY KEY(`id`), " +
+                "UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE, UNIQUE INDEX `email_UNIQUE` (`email` ASC) VISIBLE);";
 
-            using var command = new SqliteCommand(query, connection);
+            using var command = new MySqlCommand(query, connection);
             command.ExecuteNonQuery();
         }
     }

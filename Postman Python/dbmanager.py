@@ -1,4 +1,4 @@
-import sqlite3
+import pymysql
 
 from subscriber import Subscriber
 
@@ -13,8 +13,8 @@ class DatabaseManager:
         return cls.instance
     
 
-    def connect(self, db_path):
-        self.__connection = sqlite3.connect(db_path, check_same_thread = False)
+    def connect(self, server, database, user_id, password):
+        self.__connection = pymysql.connect(host = server, db = database, user = user_id, password = password)
         self.__create_default_tables()
 
 
@@ -29,7 +29,6 @@ class DatabaseManager:
         subscribers = list()
 
         cursor.execute(query)
-        cursor.row_factory = sqlite3.Row
         for row in cursor.fetchall():
             id = row['id']
             email = row['email']
@@ -57,7 +56,7 @@ class DatabaseManager:
 
 
     def __create_default_tables(self):
-        query = 'CREATE TABLE IF NOT EXISTS `subscriber` (`id` INTEGER NOT NULL UNIQUE, `email` TEXT NOT NULL UNIQUE, `subscribed_date` TEXT NOT NULL, PRIMARY KEY(`id`));'
+        query = 'CREATE TABLE IF NOT EXISTS `alphastock`.`subscriber` (`id` INT NOT NULL, `email` VARCHAR(128) NOT NULL, `subscribed_date` VARCHAR(45) NOT NULL, PRIMARY KEY(`id`), UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE, UNIQUE INDEX `email_UNIQUE` (`email` ASC) VISIBLE);'
         cursor = self.__connection.cursor()
 
         cursor.execute(query)

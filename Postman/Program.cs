@@ -28,10 +28,11 @@ namespace Postman
             
             // 설정 파일 불러오기
             settings = LoadSettings(settingFilePath);
+            var dbSettings = settings.DBSettings;
 
             // 구독자 데이터베이스 연결
-            Logger.Instance.Log(Logger.Level.Info, $"구독자 데이터베이스 연결, '{settings.DatabasePath}'");
-            DatabaseManager.Instance.Connect(settings.DatabasePath);
+            Logger.Instance.Log(Logger.Level.Info, $"구독자 데이터베이스 연결, '{dbSettings.Server}'");
+            DatabaseManager.Instance.Connect(dbSettings.Server, dbSettings.Database, dbSettings.UserId, dbSettings.Password);
 
             // 명령줄 인수 파싱
             Options options = ParseOptions(args);
@@ -67,7 +68,7 @@ namespace Postman
                 else
                 {
                     Logger.Instance.Log(Logger.Level.Info, $"새로운 설정 파일 생성, '{path}'");
-                    string json = JsonSerializer.Serialize(Settings.DefaultSettings, new JsonSerializerOptions()
+                    string json = JsonSerializer.Serialize(Settings.Defaults, new JsonSerializerOptions()
                     {
                         WriteIndented = true,
                         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All)
@@ -84,7 +85,7 @@ namespace Postman
                 Logger.Instance.Log(Logger.Level.Error, "설정 파일 처리중 문제 발생", e);
             }
 
-            return Settings.DefaultSettings;
+            return Settings.Defaults;
         }
 
         private static Options ParseOptions(string[] args)
@@ -246,15 +247,31 @@ namespace Postman
         private class Settings
         {
             public string ProjectNickname { get; set; }
-            public string DatabasePath { get; set; }
             public string GmailCredentialPath { get; set; }
+            public DatabaseSettings DBSettings { get; set; }
 
-            public static Settings DefaultSettings => new Settings()
+            public static Settings Defaults => new Settings()
             {
                 ProjectNickname = "주가예측 알리미",
-                DatabasePath = $"{AppDomain.CurrentDomain.BaseDirectory}PostmanDB.db",
-                GmailCredentialPath = $"{AppDomain.CurrentDomain.BaseDirectory}GmailCredential.txt"
+                GmailCredentialPath = $"{AppDomain.CurrentDomain.BaseDirectory}GmailCredential.txt",
+                DBSettings = DatabaseSettings.Defaults
             };
+
+            public class DatabaseSettings
+            {
+                public string Server { get; set; }
+                public string Database { get; set; }
+                public string UserId { get; set; }
+                public string Password { get; set; }
+
+                public static DatabaseSettings Defaults => new DatabaseSettings
+                {
+                    Server = "example.com",
+                    Database = "master",
+                    UserId = "id",
+                    Password = "password"
+                };
+            }
         }
     }
 }
