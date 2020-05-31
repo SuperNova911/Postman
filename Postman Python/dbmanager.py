@@ -1,4 +1,5 @@
 import pymysql
+import warnings
 
 from subscriber import Subscriber
 
@@ -29,10 +30,7 @@ class DatabaseManager:
         subscribers = list()
 
         cursor.execute(query)
-        for row in cursor.fetchall():
-            id = row['id']
-            email = row['email']
-            subscribed_date = row['subscribed_date']
+        for id, email, subscribed_date in cursor.fetchall():
             subscriber = Subscriber(email, id, subscribed_date)
             subscribers.append(subscriber)
         
@@ -40,7 +38,7 @@ class DatabaseManager:
 
 
     def add_subscriber(self, subscriber):
-        query = 'INSERT INTO `subscriber` (`id`, `email`, `subscribed_date`) VALUES (?, ?, ?);'
+        query = 'INSERT INTO `subscriber` (`id`, `email`, `subscribed_date`) VALUES (%s, %s, %s);'
         cursor = self.__connection.cursor()
 
         cursor.execute(query, (subscriber.id, subscriber.email, subscriber.subscribed_date))
@@ -48,7 +46,7 @@ class DatabaseManager:
 
 
     def remove_subscriber_by_id(self, id):
-        query = 'DELETE FROM `subscriber` WHERE `id` = ?;'
+        query = 'DELETE FROM `subscriber` WHERE `id` = %s;'
         cursor = self.__connection.cursor()
 
         cursor.execute(query, (id,))
@@ -61,3 +59,6 @@ class DatabaseManager:
 
         cursor.execute(query)
         self.__connection.commit()
+
+    
+warnings.filterwarnings('ignore')
