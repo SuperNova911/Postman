@@ -160,14 +160,13 @@ namespace Postman
             Logger.Instance.Log(Logger.Level.Info, $"'{subscriberEmails.Count()}'명의 구독자 이메일 주소를 불러옴");
 
             // MailSender 초기화
-            NetworkCredential gmailCredential = LoadGmailCredential(settings.GmailCredentialPath);
-            if (gmailCredential == null)
+            NetworkCredential mailCredential = settings.MailSettings.Crediential;
+            if (mailCredential == null)
             {
-                Logger.Instance.Log(Logger.Level.Warn, "Gmail credential이 없음");
+                Logger.Instance.Log(Logger.Level.Warn, "Mail credential이 없음");
                 return;
             }
-            Logger.Instance.Log(Logger.Level.Info, $"Gmail credential을 불러옴, '{gmailCredential.UserName}'");
-            IMailSender mailSender = new GmailSender(gmailCredential.UserName, gmailCredential.Password, settings.ProjectNickname);
+            IMailSender mailSender = new GmailSender(mailCredential.UserName, mailCredential.Password, settings.ProjectNickname);
 
             // 메일 내용 빌드
             string subject = $"[{settings.ProjectNickname}] {DateTime.Today:yyyy-MM-dd}";
@@ -182,54 +181,6 @@ namespace Postman
 
             stopwatch.Stop();
             Logger.Instance.Log(Logger.Level.Info, $"메일 전송 완료, {TimeSpan.FromMilliseconds(stopwatch.ElapsedMilliseconds).TotalSeconds}secs");
-        }
-
-        private static NetworkCredential LoadGmailCredential(string path)
-        {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                throw new ArgumentNullException(nameof(path));
-            }
-
-            try
-            {
-                foreach (string accountString in File.ReadAllLines(path))
-                {
-                    string[] credential = accountString.Split('/');
-                    if (credential.Length != 2)
-                    {
-                        Logger.Instance.Log(Logger.Level.Warn, $"잘못된 형식의 Credential, '{credential}'");
-                        continue;
-                    }
-
-                    string id = credential[0];
-                    string password = credential[1];
-                    if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(password))
-                    {
-                        Logger.Instance.Log(Logger.Level.Warn, "아이디 또는 비밀번호가 빈 문자열");
-                        continue;
-                    }
-
-                    if (EmailValidator.Validate(id) == false)
-                    {
-                        Logger.Instance.Log(Logger.Level.Warn, $"올바른 이메일의 형식이 아님, '{id}'");
-                        continue;
-                    }
-
-                    return new NetworkCredential(id, password);
-                }
-            }
-            catch (FileNotFoundException)
-            {
-                Logger.Instance.Log(Logger.Level.Info, $"Gmail credential 파일이 '{path}' 경로에 생성됨");
-                File.WriteAllText(path, "id/password");
-            }
-            catch (IOException e)
-            {
-                Logger.Instance.Log(Logger.Level.Error, $"Gmail credential을 불러오는 중 문제 발생, '{path}'", e);
-            }
-
-            return null;
         }
 
         private class Options
@@ -247,15 +198,29 @@ namespace Postman
         private class Settings
         {
             public string ProjectNickname { get; set; }
-            public string GmailCredentialPath { get; set; }
+            public MailSenderSettings MailSettings { get; set; }
             public DatabaseSettings DBSettings { get; set; }
 
             public static Settings Defaults => new Settings()
             {
                 ProjectNickname = "주가예측 알리미",
-                GmailCredentialPath = $"{AppDomain.CurrentDomain.BaseDirectory}GmailCredential.txt",
+                MailSettings = MailSenderSettings.Defaults,
                 DBSettings = DatabaseSettings.Defaults
             };
+
+            public class MailSenderSettings
+            {
+                public string Account { get; set; }
+                public string Password { get; set; }
+
+                public static MailSenderSettings Defaults => new MailSenderSettings
+                {
+                    Account = "example@email.com",
+                    Password = "password"
+                };
+
+                public NetworkCredential Crediential => new NetworkCredential(Account, Password);
+            }
 
             public class DatabaseSettings
             {
