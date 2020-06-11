@@ -122,7 +122,7 @@ namespace Postman
                 Logger.Instance.Log(Logger.Level.Info, $"구독자 '{emails.Count()}'명 추가");
                 foreach (string email in emails)
                 {
-                    SubscribeManager.Instance.Subscribe(email);
+                    SubscribeManager.Instance.Subscribe(email.Trim());
                 }
             }
 
@@ -133,8 +133,8 @@ namespace Postman
                 Logger.Instance.Log(Logger.Level.Info, $"구독자 '{emails.Count()}'명 제거");
                 foreach (string email in emails)
                 {
-                    var subscriber = new Subscriber(email);
-                    SubscribeManager.Instance.Unsubscribe(email, subscriber.Token);
+                    var subscriber = new Subscriber(email.Trim());
+                    SubscribeManager.Instance.Unsubscribe(subscriber.Email, subscriber.Token);
                 }
             }
 
