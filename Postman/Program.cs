@@ -160,7 +160,7 @@ namespace Postman
             Logger.Instance.Log(Logger.Level.Info, $"'{subscriberEmails.Count()}'명의 구독자 이메일 주소를 불러옴");
 
             // MailSender 초기화
-            NetworkCredential mailCredential = settings.MailSettings.Crediential;
+            NetworkCredential mailCredential = settings.MailSettings.GetCrediential();
             if (mailCredential == null)
             {
                 Logger.Instance.Log(Logger.Level.Warn, "Mail credential이 없음");
@@ -219,7 +219,10 @@ namespace Postman
                     Password = "password"
                 };
 
-                public NetworkCredential Crediential => new NetworkCredential(Account, Password);
+                public NetworkCredential GetCrediential()
+                {
+                    return new NetworkCredential(Account, Password);
+                }
             }
 
             public class DatabaseSettings
