@@ -35,6 +35,11 @@ namespace Postman
             sender = new MailAddress(gmailAccount, displayName);
         }
 
+        public bool SendMail(string receiver, string subject, string body, bool isBodyHtml = false)
+        {
+            return SendMail(new string[] { receiver }, subject, body, isBodyHtml);
+        }
+
         public bool SendMail(IEnumerable<string> receivers, string subject, string body, bool isBodyHtml = false)
         {
             if (receivers == null)

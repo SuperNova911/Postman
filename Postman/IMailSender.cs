@@ -6,6 +6,7 @@ namespace Postman
 {
     interface IMailSender
     {
+        bool SendMail(string receiver, string subject, string body, bool isBodyHtml = false);
         bool SendMail(IEnumerable<string> receivers, string subject, string body, bool isBodyHtml = false);
     }
 }

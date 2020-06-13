@@ -135,6 +135,105 @@ namespace Postman
             }
         }
 
+        public Dictionary<DateTime, int> SelectClosingPrices(string stockId, DateTime from, DateTime to)
+        {
+            string query = "SELECT `MarketDate`, `Price` FROM `alphastock`.`Price` " +
+                "WHERE `Code` = @stock_id AND `MarketDate` BETWEEN @date_from AND @date_to;";
+            using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@stock_id", stockId);
+            command.Parameters.AddWithValue("@date_from", from);
+            command.Parameters.AddWithValue("@date_to", from);
+
+            var closingPrices = new Dictionary<DateTime, int>();
+            try
+            {
+                using MySqlDataReader dataReader = command.ExecuteReader();
+                while (dataReader.Read())
+                {
+                    DateTime date = dataReader.GetDateTime("MarketDate");
+                    int price = dataReader.GetInt32("Price");
+                    closingPrices.Add(date, price);
+                }
+            }
+            catch (MySqlException e)
+            {
+                Logger.Instance.Log(Logger.Level.Error, "데이터베이스 오류", e);
+            }
+            return closingPrices;
+        }
+
+        public Dictionary<DateTime, int> SelectPredictPrices(string stockId, DateTime from, DateTime to)
+        {
+            string query = "SELECT `MarketDate`, `PredictPrice` FROM `alphastock`.`Predict` " +
+                "WHERE `Code` = @stock_id AND `MarketDate` BETWEEN @date_from AND @date_to;";
+            using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@stock_id", stockId);
+            command.Parameters.AddWithValue("@date_from", from);
+            command.Parameters.AddWithValue("@date_to", from);
+
+            var predictPrices = new Dictionary<DateTime, int>();
+            try
+            {
+                using MySqlDataReader dataReader = command.ExecuteReader();
+                while (dataReader.Read())
+                {
+                    DateTime date = dataReader.GetDateTime("MarketDate");
+                    int price = dataReader.GetInt32("PredictPrice");
+                    predictPrices.Add(date, price);
+                }
+            }
+            catch (MySqlException e)
+            {
+                Logger.Instance.Log(Logger.Level.Error, "데이터베이스 오류", e);
+            }
+            return predictPrices;
+        }
+
+        public string SelectStockName(string stockId)
+        {
+            string query = "SELECT `Name` FROM `alphastock`.`Name` WHERE `Code` = @stock_id;";
+            using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@stock_id", stockId);
+
+            string stockName = "Missing name";
+            try
+            {
+                using MySqlDataReader dataReader = command.ExecuteReader();
+                if (dataReader.Read())
+                {
+                    stockName = dataReader.GetString("Name");
+                }
+            }
+            catch (MySqlException e)
+            {
+                Logger.Instance.Log(Logger.Level.Error, "데이터베이스 오류", e);
+            }
+            return stockName;
+        }
+
+        public List<string> SelectFavoriteStockIds(Subscriber subscriber)
+        {
+            string query = "SELECT `stock_id` FROM `alphastock`.`favorite` WHERE `user_id` = @user_id;";
+            using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@user_id", subscriber.Id);
+
+            var stockIds = new List<string>();
+            try
+            {
+                using MySqlDataReader dataReader = command.ExecuteReader();
+                while (dataReader.Read())
+                {
+                    string stockId = dataReader.GetString("stock_id");
+                    stockIds.Add(stockId);
+                }
+            }
+            catch (MySqlException e)
+            {
+                Logger.Instance.Log(Logger.Level.Error, "데이터베이스 오류", e);
+            }
+            return stockIds;
+        }
+
         private void CreateDefaultTables()
         {
             string query = "CREATE TABLE IF NOT EXISTS `alphastock`.`subscriber` " +

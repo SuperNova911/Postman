@@ -12,6 +12,7 @@ using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Postman
@@ -147,18 +148,6 @@ namespace Postman
 
         private static void SendDailyMail()
         {
-            // 구독자 정보 불러오기
-            IEnumerable<Subscriber> subscribers = SubscribeManager.Instance.GetSubscribers();
-            if (subscribers.Count() == 0)
-            {
-                Logger.Instance.Log(Logger.Level.Warn, "메일을 보낼 구독자가 없음");
-                return;
-            }
-
-            // 이메일 주소 선택
-            IEnumerable<string> subscriberEmails = subscribers.Select(x => x.Email);
-            Logger.Instance.Log(Logger.Level.Info, $"'{subscriberEmails.Count()}'명의 구독자 이메일 주소를 불러옴");
-
             // MailSender 초기화
             NetworkCredential mailCredential = settings.MailSettings.GetCrediential();
             if (mailCredential == null)
@@ -166,21 +155,76 @@ namespace Postman
                 Logger.Instance.Log(Logger.Level.Warn, "Mail credential이 없음");
                 return;
             }
+
+            // 구독자 정보 불러오기
+            IEnumerable<Subscriber> subscribers = SubscribeManager.Instance.GetSubscribers();
+            if (subscribers.Count() == 0)
+            {
+                Logger.Instance.Log(Logger.Level.Warn, "메일을 보낼 구독자가 없음");
+                return;
+            }
+            Logger.Instance.Log(Logger.Level.Info, $"'{subscribers.Count()}'명의 구독자를 불러옴");
+
+            string template;
+            try
+            {
+                template = File.ReadAllText(settings.DailyMailTemplatePath);
+            }
+            catch (IOException e)
+            {
+                Logger.Instance.Log(Logger.Level.Error, $"파일 읽기 오류, path: {settings.DailyMailTemplatePath}", e);
+                return;
+            }
+            catch (Exception e)
+            {
+                Logger.Instance.Log(Logger.Level.Error, $"파일 읽기 오류, path: {settings.DailyMailTemplatePath}", e);
+                return;
+            }
+
             IMailSender mailSender = new GmailSender(mailCredential.UserName, mailCredential.Password, settings.ProjectNickname);
 
-            // 메일 내용 빌드
-            string subject = $"[{settings.ProjectNickname}] {DateTime.Today:yyyy-MM-dd}";
-            string body = DateTime.Now.Second % 2 == 1 ? "📈 떡상 가즈아~~!" : "📉 내려간다 꽉잡아!!!";
-
-            // 메일 전송
             Logger.Instance.Log(Logger.Level.Info, "메일 전송 시작");
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            mailSender.SendMail(subscriberEmails, subject, body);
+            var sendMailTasks = new List<Task>();
+
+            // 메일 내용 빌드
+            string subject = $"[{settings.ProjectNickname}] {DateTime.Today:yyyy-MM-dd}";
+            DateTime from = DateTime.Today - TimeSpan.FromDays(14);
+            DateTime to = DateTime.Today + TimeSpan.FromDays(7);
+            foreach (Subscriber subscriber in subscribers)
+            {
+                DailyMailBuilder dailyMailBuilder = new DailyMailBuilder(template);
+                List<string> favoriteStockIds = DatabaseManager.Instance.SelectFavoriteStockIds(subscriber);
+                foreach (string stockId in favoriteStockIds)
+                {
+                    string stockName = DatabaseManager.Instance.SelectStockName(stockId);
+                    Dictionary<DateTime, int> closingPrices = DatabaseManager.Instance.SelectClosingPrices(stockId, from, to);
+                    Dictionary<DateTime, int> predictPrices = DatabaseManager.Instance.SelectPredictPrices(stockId, from, to);
+
+                    var chartData = new DailyMailBuilder.ChartData(stockName, closingPrices, predictPrices);
+                    dailyMailBuilder.ChartDatas.Add(chartData);
+                }
+                string body = dailyMailBuilder.Build();
+
+                // 메일 전송
+                sendMailTasks.Add(new Task(() =>
+                {
+                    mailSender.SendMail(subscriber.Email, subject, body, true);
+                }));
+            }
+
+            Logger.Instance.Log(Logger.Level.Info, "메일 전송 완료 대기 중");
+            Task.WaitAll(sendMailTasks.ToArray());
 
             stopwatch.Stop();
             Logger.Instance.Log(Logger.Level.Info, $"메일 전송 완료, {TimeSpan.FromMilliseconds(stopwatch.ElapsedMilliseconds).TotalSeconds}secs");
+        }
+
+        private static string BuildDailyMailContents(DateTime date)
+        {
+            return DateTime.Now.Second % 2 == 1 ? "📈 떡상 가즈아~~!" : "📉 내려간다 꽉잡아!!!";
         }
 
         private class Options
@@ -198,12 +242,14 @@ namespace Postman
         private class Settings
         {
             public string ProjectNickname { get; set; }
+            public string DailyMailTemplatePath { get; set; }
             public MailSenderSettings MailSettings { get; set; }
             public DatabaseSettings DBSettings { get; set; }
 
             public static Settings Defaults => new Settings()
             {
                 ProjectNickname = "주가예측 알리미",
+                DailyMailTemplatePath = "./dailyMail.html",
                 MailSettings = MailSenderSettings.Defaults,
                 DBSettings = DatabaseSettings.Defaults
             };
