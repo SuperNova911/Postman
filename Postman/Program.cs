@@ -66,7 +66,7 @@ namespace Postman
                     string json = File.ReadAllText(settingFilePath);
                     var loadedSettings = JsonSerializer.Deserialize<Settings>(json);
 
-                    json = JsonSerializer.Serialize(Settings.Defaults, new JsonSerializerOptions()
+                    json = JsonSerializer.Serialize(loadedSettings, new JsonSerializerOptions()
                     {
                         WriteIndented = true,
                         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All)
