@@ -205,6 +205,8 @@ namespace Postman
             foreach (Subscriber subscriber in subscribers)
             {
                 DailyMailBuilder dailyMailBuilder = new DailyMailBuilder(template);
+                dailyMailBuilder.Receiver = subscriber;
+
                 List<string> favoriteStockIds = DatabaseManager.Instance.SelectFavoriteStockIds(subscriber);
                 foreach (string stockId in favoriteStockIds)
                 {
