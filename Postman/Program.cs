@@ -63,19 +63,17 @@ namespace Postman
                 if (File.Exists(path))
                 {
                     Logger.Instance.Log(Logger.Level.Info, "설정 파일 로드");
-                    string json = File.ReadAllText(settingFilePath);
-                    return JsonSerializer.Deserialize<Settings>(json);
+                    string jsonData = File.ReadAllText(settingFilePath);
+                    return JsonSerializer.Deserialize<Settings>(jsonData);
                 }
-                else
+
+                Logger.Instance.Log(Logger.Level.Info, $"설정 파일 업데이트, '{path}'");
+                string json = JsonSerializer.Serialize(Settings.Defaults, new JsonSerializerOptions()
                 {
-                    Logger.Instance.Log(Logger.Level.Info, $"새로운 설정 파일 생성, '{path}'");
-                    string json = JsonSerializer.Serialize(Settings.Defaults, new JsonSerializerOptions()
-                    {
-                        WriteIndented = true,
-                        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All)
-                    });
-                    File.WriteAllText(settingFilePath, json);
-                }
+                    WriteIndented = true,
+                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All)
+                });
+                File.WriteAllText(settingFilePath, json);
             }
             catch (JsonException e)
             {
