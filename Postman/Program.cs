@@ -220,7 +220,7 @@ namespace Postman
                 string body = dailyMailBuilder.Build();
 
                 // 메일 전송
-                sendMailTasks.Add(new Task(() =>
+                sendMailTasks.Add(Task.Run(() =>
                 {
                     mailSender.SendMail(subscriber.Email, subject, body, true);
                 }));
