@@ -66,14 +66,6 @@ namespace Postman
                     string jsonData = File.ReadAllText(settingFilePath);
                     return JsonSerializer.Deserialize<Settings>(jsonData);
                 }
-
-                Logger.Instance.Log(Logger.Level.Info, $"설정 파일 업데이트, '{path}'");
-                string json = JsonSerializer.Serialize(Settings.Defaults, new JsonSerializerOptions()
-                {
-                    WriteIndented = true,
-                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All)
-                });
-                File.WriteAllText(settingFilePath, json);
             }
             catch (JsonException e)
             {
@@ -82,6 +74,16 @@ namespace Postman
             catch (IOException e)
             {
                 Logger.Instance.Log(Logger.Level.Error, "설정 파일 처리중 문제 발생", e);
+            }
+            finally
+            {
+                Logger.Instance.Log(Logger.Level.Info, $"설정 파일 업데이트, '{path}'");
+                string json = JsonSerializer.Serialize(Settings.Defaults, new JsonSerializerOptions()
+                {
+                    WriteIndented = true,
+                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All)
+                });
+                File.WriteAllText(settingFilePath, json);
             }
 
             return Settings.Defaults;
