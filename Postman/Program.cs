@@ -1,5 +1,6 @@
 ﻿using CommandLine;
 using EmailValidation;
+using Google.Protobuf.WellKnownTypes;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -37,6 +38,7 @@ namespace Postman
 
             // 명령줄 인수 파싱
             Options options = ParseOptions(args);
+            options.SendDailyMail = true;
 
             // 옵션 처리
             if (options != null)
@@ -204,19 +206,23 @@ namespace Postman
             DateTime to = DateTime.Today + TimeSpan.FromDays(7);
             foreach (Subscriber subscriber in subscribers)
             {
-                DailyMailBuilder dailyMailBuilder = new DailyMailBuilder(template);
-                dailyMailBuilder.Receiver = subscriber;
+                DailyMailBuilder dailyMailBuilder = new DailyMailBuilder(template)
+                {
+                    Receiver = subscriber
+                };
 
                 List<string> favoriteStockIds = DatabaseManager.Instance.SelectFavoriteStockIds(subscriber);
                 foreach (string stockId in favoriteStockIds)
                 {
-                    string stockName = DatabaseManager.Instance.SelectStockName(stockId);
-                    Dictionary<DateTime, int> closingPrices = DatabaseManager.Instance.SelectClosingPrices(stockId, from, to);
-                    Dictionary<DateTime, int> predictPrices = DatabaseManager.Instance.SelectPredictPrices(stockId, from, to);
+                    int todayClosingPrice = DatabaseManager.Instance.SelectClosingPrice(stockId, DateTime.Today);
+                    Dictionary<DateTime, int> predictClosingPrices = DatabaseManager.Instance.SelectPredictPrices(stockId, 
+                        DateTime.Today + TimeSpan.FromDays(1), 
+                        DateTime.Today + TimeSpan.FromDays(11));
 
-                    var chartData = new DailyMailBuilder.ChartData(stockName, closingPrices, predictPrices);
+                    var chartData = new DailyMailBuilder.ChartData(stockId, todayClosingPrice, predictClosingPrices.Values);
                     dailyMailBuilder.ChartDatas.Add(chartData);
                 }
+
                 string body = dailyMailBuilder.Build();
 
                 // 메일 전송
@@ -231,11 +237,6 @@ namespace Postman
 
             stopwatch.Stop();
             Logger.Instance.Log(Logger.Level.Info, $"메일 전송 완료, {TimeSpan.FromMilliseconds(stopwatch.ElapsedMilliseconds).TotalSeconds}secs");
-        }
-
-        private static string BuildDailyMailContents(DateTime date)
-        {
-            return DateTime.Now.Second % 2 == 1 ? "📈 떡상 가즈아~~!" : "📉 내려간다 꽉잡아!!!";
         }
 
         private class Options

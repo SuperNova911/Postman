@@ -135,6 +135,28 @@ namespace Postman
             }
         }
 
+        public int SelectClosingPrice(string stockId, DateTime date)
+        {
+            string query = "SELECT `Price` From `alphastock`.`Price` WHERE `Code` = @stock_id AND `MarketDate` = @date;";
+            using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@stock_id", stockId);
+            command.Parameters.AddWithValue("@date", date);
+
+            try
+            {
+                using MySqlDataReader dataReader = command.ExecuteReader();
+                if (dataReader.Read())
+                {
+                    return dataReader.GetInt32("Price");
+                }
+            }
+            catch (MySqlException e)
+            {
+                Logger.Instance.Log(Logger.Level.Error, "데이터베이스 오류", e);
+            }
+            return 0;
+        }
+
         public Dictionary<DateTime, int> SelectClosingPrices(string stockId, DateTime from, DateTime to)
         {
             string query = "SELECT `MarketDate`, `Price` FROM `alphastock`.`Price` " +
@@ -142,7 +164,7 @@ namespace Postman
             using var command = new MySqlCommand(query, connection);
             command.Parameters.AddWithValue("@stock_id", stockId);
             command.Parameters.AddWithValue("@date_from", from);
-            command.Parameters.AddWithValue("@date_to", from);
+            command.Parameters.AddWithValue("@date_to", to);
 
             var closingPrices = new Dictionary<DateTime, int>();
             try
@@ -169,7 +191,7 @@ namespace Postman
             using var command = new MySqlCommand(query, connection);
             command.Parameters.AddWithValue("@stock_id", stockId);
             command.Parameters.AddWithValue("@date_from", from);
-            command.Parameters.AddWithValue("@date_to", from);
+            command.Parameters.AddWithValue("@date_to", to);
 
             var predictPrices = new Dictionary<DateTime, int>();
             try

@@ -17,6 +17,7 @@ namespace Postman
 
         public Subscriber Receiver { get; set; }
         public List<ChartData> ChartDatas { get; }
+        
 
         public string Build()
         {
@@ -24,83 +25,123 @@ namespace Postman
             contents = contents.Replace("%email%", Receiver.Email);
             contents = contents.Replace("%token%", Receiver.Token);
 
+            contents = contents.Replace("%predictdate%", DateTime.Today.ToString("yyyy년 M월 d일"));
+
             StringBuilder chartElementBuilder = new StringBuilder();
-            StringBuilder callbackBuilder = new StringBuilder();
-            StringBuilder functionBuilder = new StringBuilder();
-            for (int i = 0; i < ChartDatas.Count; i++)
+            foreach (ChartData chartData in ChartDatas.Distinct())
             {
-                chartElementBuilder.Append($"<tr><div id = \"chart{i}\" style = \"border: 1px solid #ccc;\"></div></tr> ");
-                callbackBuilder.Append($"google.charts.setOnLoadCallback(drawChart{i}); ");
-                functionBuilder.Append(ChartDatas[i].BuildFunction($"drawChart{i}", $"chart{i}"));
+                chartElementBuilder.Append("<tr>");
+                chartElementBuilder.Append($"<img src=\"https://s3.ap-northeast-2.amazonaws.com/prediction.bucket/PredictPNG/Predict_{chartData.StockId}.png\" alt=\"chart\" style=\"height: 500px; width: auto; margin-top: 20px; border: 1px solid #ccc;\">");
+                chartElementBuilder.AppendLine($"<p>오늘 종가: {chartData.TodayClosingPrice}원</p>");
+                chartElementBuilder.AppendLine($"<p>앞으로 {chartData.PredictClosingPrices.Count()}일 간 예측가: {string.Join(",", chartData.PredictClosingPrices)}원</p>");
+                chartElementBuilder.Append("</tr>");
             }
             contents = contents.Replace("%chart%", chartElementBuilder.ToString());
-            contents = contents.Replace("%callback%", callbackBuilder.ToString());
-            contents = contents.Replace("%function%", functionBuilder.ToString());
 
             return contents;
         }
 
-        public class ChartData
+        public class ChartData : IEquatable<ChartData>
         {
-            public ChartData(string title, Dictionary<DateTime, int> closingPrices, Dictionary<DateTime, int> predictPrices)
+            public ChartData(string stockId, int todayClosingPrice, IEnumerable<int> predictClosingPrices)
             {
-                Title = title ?? throw new ArgumentNullException(nameof(title));
-                ClosingPrices = closingPrices ?? throw new ArgumentNullException(nameof(closingPrices));
-                PredictPrices = predictPrices ?? throw new ArgumentNullException(nameof(predictPrices));
+                StockId = stockId ?? throw new ArgumentNullException(nameof(stockId));
+                TodayClosingPrice = todayClosingPrice;
+                PredictClosingPrices = predictClosingPrices ?? throw new ArgumentNullException(nameof(predictClosingPrices));
             }
 
-            public string Title { get; }
-            public Dictionary<DateTime, int> ClosingPrices { get; }
-            public Dictionary<DateTime, int> PredictPrices { get; }
+            public string StockId { get; }
+            public int TodayClosingPrice { get; }
+            public IEnumerable<int> PredictClosingPrices { get; }
 
-            public string BuildFunction(string functionName, string chartElementId)
+            public override bool Equals(object obj)
             {
-                StringBuilder builder = new StringBuilder();
+                return Equals(obj as ChartData);
+            }
 
-                builder.Append("function ");
-                builder.Append(functionName);
-                builder.Append("() { var data = new google.visualization.DataTable(); data.addColumn('date', 'X'); data.addColumn('number', '종가'); data.addColumn('number', '예측가'); data.addRows(");
+            public bool Equals(ChartData other)
+            {
+                return other != null &&
+                       StockId == other.StockId;
+            }
 
-                builder.Append("[ ");
-                IEnumerable<DateTime> dates = ClosingPrices.Keys.Union(PredictPrices.Keys).OrderBy(x => x);
-                foreach (DateTime date in dates)
-                {
-                    builder.Append("[new Date(");
-                    builder.Append(date.Year);
-                    builder.Append(", ");
-                    builder.Append(date.Month - 1);
-                    builder.Append(", ");
-                    builder.Append(date.Day);
-                    builder.Append("), ");
-                    if (ClosingPrices.TryGetValue(date, out int price))
-                    {
-                        builder.Append(price);
-                    }
-                    else
-                    {
-                        builder.Append("null");
-                    }
-                    builder.Append(", ");
-                    if (PredictPrices.TryGetValue(date, out price))
-                    {
-                        builder.Append(price);
-                    }
-                    else
-                    {
-                        builder.Append("null");
-                    }
-                    builder.Append("], ");
-                }
-                builder.Append(" ]");
-                
-                builder.Append("); var options = { title: '");
-                builder.Append(Title);
-                builder.Append("', height: 300, hAxis: { title: '날짜', format: 'yy/M/d', gridlines: { count: 15 } }, vAxis: { title: '종가 (원)' } }; var chart = new google.visualization.LineChart(document.getElementById('");
-                builder.Append(chartElementId);
-                builder.Append("')); chart.draw(data, options); } ");
+            public override int GetHashCode()
+            {
+                return HashCode.Combine(StockId);
+            }
 
-                return builder.ToString();
+            public static bool operator ==(ChartData left, ChartData right)
+            {
+                return EqualityComparer<ChartData>.Default.Equals(left, right);
+            }
+
+            public static bool operator !=(ChartData left, ChartData right)
+            {
+                return !(left == right);
             }
         }
+
+        //public class ChartData
+        //{
+        //    public ChartData(string title, Dictionary<DateTime, int> closingPrices, Dictionary<DateTime, int> predictPrices)
+        //    {
+        //        Title = title ?? throw new ArgumentNullException(nameof(title));
+        //        ClosingPrices = closingPrices ?? throw new ArgumentNullException(nameof(closingPrices));
+        //        PredictPrices = predictPrices ?? throw new ArgumentNullException(nameof(predictPrices));
+        //    }
+
+        //    public string Title { get; }
+        //    public Dictionary<DateTime, int> ClosingPrices { get; }
+        //    public Dictionary<DateTime, int> PredictPrices { get; }
+
+        //    public string BuildFunction(string functionName, string chartElementId)
+        //    {
+        //        StringBuilder builder = new StringBuilder();
+
+        //        builder.Append("function ");
+        //        builder.Append(functionName);
+        //        builder.Append("() { var data = new google.visualization.DataTable(); data.addColumn('date', 'X'); data.addColumn('number', '종가'); data.addColumn('number', '예측가'); data.addRows(");
+
+        //        builder.Append("[ ");
+        //        IEnumerable<DateTime> dates = ClosingPrices.Keys.Union(PredictPrices.Keys).OrderBy(x => x);
+        //        foreach (DateTime date in dates)
+        //        {
+        //            builder.Append("[new Date(");
+        //            builder.Append(date.Year);
+        //            builder.Append(", ");
+        //            builder.Append(date.Month - 1);
+        //            builder.Append(", ");
+        //            builder.Append(date.Day);
+        //            builder.Append("), ");
+        //            if (ClosingPrices.TryGetValue(date, out int price))
+        //            {
+        //                builder.Append(price);
+        //            }
+        //            else
+        //            {
+        //                builder.Append("null");
+        //            }
+        //            builder.Append(", ");
+        //            if (PredictPrices.TryGetValue(date, out price))
+        //            {
+        //                builder.Append(price);
+        //            }
+        //            else
+        //            {
+        //                builder.Append("null");
+        //            }
+        //            builder.Append("], ");
+        //        }
+        //        builder.Append(" ]");
+                
+        //        builder.Append("); var options = { title: '");
+        //        builder.Append(Title);
+        //        builder.Append("', height: 300, hAxis: { title: '날짜', format: 'yy/M/d', gridlines: { count: 15 } }, vAxis: { title: '종가 (원)' } }; var chart = new google.visualization.LineChart(document.getElementById('");
+        //        builder.Append(chartElementId);
+        //        builder.Append("')); chart.draw(data, options); } ");
+
+        //        return builder.ToString();
+        //    }
+        //}
     }
 }
