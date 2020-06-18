@@ -38,7 +38,6 @@ namespace Postman
 
             // 명령줄 인수 파싱
             Options options = ParseOptions(args);
-            options.SendDailyMail = true;
 
             // 옵션 처리
             if (options != null)
